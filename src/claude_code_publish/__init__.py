@@ -1,6 +1,5 @@
 """Convert Claude Code session JSON to a clean mobile-friendly HTML page with pagination."""
 
-import importlib.metadata
 import json
 import html
 import os
@@ -922,12 +921,7 @@ def generate_html(json_path, output_dir, github_repo=None):
 
 
 @click.group(cls=DefaultGroup, default="session", default_if_no_args=False)
-@click.version_option(
-    importlib.metadata.version("claude-code-publish"),
-    "-v",
-    "--version",
-    prog_name="claude-code-publish",
-)
+@click.version_option(None, "-v", "--version", package_name="claude-code-publish")
 def cli():
     """Convert Claude Code session JSON to mobile-friendly HTML pages."""
     pass
