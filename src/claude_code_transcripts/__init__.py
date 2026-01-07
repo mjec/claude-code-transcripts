@@ -145,7 +145,7 @@ def _get_jsonl_summary(filepath, max_length=200):
                     ):
                         content = obj["message"]["content"]
                         text = extract_text_from_content(content)
-                        if text and not text.startswith("<"):
+                        if text:
                             if len(text) > max_length:
                                 return text[: max_length - 3] + "..."
                             return text
