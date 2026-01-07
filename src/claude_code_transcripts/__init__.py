@@ -61,18 +61,17 @@ def extract_text_from_content(content):
     Returns:
         The extracted text as a string, or empty string if no text found.
     """
+    texts = []
     if isinstance(content, str):
-        return content.strip()
+        texts = [content.strip()]
     elif isinstance(content, list):
         # Extract text from content blocks of type "text"
-        texts = []
         for block in content:
             if isinstance(block, dict) and block.get("type") == "text":
                 text = block.get("text", "")
                 if text:
                     texts.append(text)
-        return " ".join(texts).strip()
-    return ""
+    return " ".join([re.sub('<([^<]+?)>(.*)</\\1>', '', t.replace("\n", " ")) for t in texts]).strip()
 
 
 # Module-level variable for GitHub repo (set by generate_html)
