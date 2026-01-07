@@ -1445,8 +1445,8 @@ def local_cmd(output, output_auto, repo, gist, include_json, open_browser, limit
         size_kb = stat.st_size / 1024
         date_str = mod_time.strftime("%Y-%m-%d %H:%M")
         # Truncate summary if too long
-        if len(summary) > 50:
-            summary = summary[:47] + "..."
+        if len(summary) > 80:
+            summary = summary[:77] + "..."
         display = f"{date_str}  {size_kb:5.0f} KB  {summary}"
         choices.append(questionary.Choice(title=display, value=filepath))
 
