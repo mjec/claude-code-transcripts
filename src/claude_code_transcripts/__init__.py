@@ -1200,7 +1200,7 @@ def generate_index_pagination_html(total_pages):
     return _macros.index_pagination(total_pages)
 
 
-def generate_html(json_path, output_dir, github_repo=None):
+def generate_html(json_path, output_dir, github_repo=None, title=None, description=None):
     output_dir = Path(output_dir)
     output_dir.mkdir(exist_ok=True)
 
@@ -1367,6 +1367,8 @@ def generate_html(json_path, output_dir, github_repo=None):
         total_commits=total_commits,
         total_pages=total_pages,
         index_items_html="".join(index_items),
+        title_html=render_markdown_text(title).replace('<p>', '').replace('</p>', '') if title else None,
+        description_html=render_markdown_text(description) if description else None,
     )
     index_path = output_dir / "index.html"
     index_path.write_text(index_content, encoding="utf-8")
@@ -1421,7 +1423,15 @@ def cli():
     default=10,
     help="Maximum number of sessions to show (default: 10)",
 )
-def local_cmd(output, output_auto, repo, gist, include_json, open_browser, limit):
+@click.option(
+    "--title",
+    help="Custom title for the index page. If not specified, uses 'Claude Code transcript'.",
+)
+@click.option(
+    "--description",
+    help="Description text to display below the title on the index page.",
+)
+def local_cmd(output, output_auto, repo, gist, include_json, open_browser, limit, title, description):
     """Select and convert a local Claude Code session to HTML."""
     projects_folder = Path.home() / ".claude" / "projects"
 
@@ -1472,7 +1482,7 @@ def local_cmd(output, output_auto, repo, gist, include_json, open_browser, limit
         output = Path(tempfile.gettempdir()) / f"claude-session-{session_file.stem}"
 
     output = Path(output)
-    generate_html(session_file, output, github_repo=repo)
+    generate_html(session_file, output, github_repo=repo, title=title, description=description)
 
     # Show output directory
     click.echo(f"Output: {output.resolve()}")
@@ -1573,7 +1583,15 @@ def fetch_url_to_tempfile(url):
     is_flag=True,
     help="Open the generated index.html in your default browser (default if no -o specified).",
 )
-def json_cmd(json_file, output, output_auto, repo, gist, include_json, open_browser):
+@click.option(
+    "--title",
+    help="Custom title for the index page. If not specified, uses 'Claude Code transcript'.",
+)
+@click.option(
+    "--description",
+    help="Description text to display below the title on the index page.",
+)
+def json_cmd(json_file, output, output_auto, repo, gist, include_json, open_browser, title, description):
     """Convert a Claude Code session JSON/JSONL file or URL to HTML."""
     # Handle URL input
     if is_url(json_file):
@@ -1603,7 +1621,7 @@ def json_cmd(json_file, output, output_auto, repo, gist, include_json, open_brow
         )
 
     output = Path(output)
-    generate_html(json_file_path, output, github_repo=repo)
+    generate_html(json_file_path, output, github_repo=repo, title=title, description=description)
 
     # Show output directory
     click.echo(f"Output: {output.resolve()}")
@@ -1676,7 +1694,7 @@ def format_session_for_display(session_data):
     return f"{session_id}  {created_at[:19] if created_at else 'N/A':19}  {title}"
 
 
-def generate_html_from_session_data(session_data, output_dir, github_repo=None):
+def generate_html_from_session_data(session_data, output_dir, github_repo=None, title=None, description=None):
     """Generate HTML from session data dict (instead of file path)."""
     output_dir = Path(output_dir)
     output_dir.mkdir(exist_ok=True, parents=True)
@@ -1837,6 +1855,8 @@ def generate_html_from_session_data(session_data, output_dir, github_repo=None):
         total_commits=total_commits,
         total_pages=total_pages,
         index_items_html="".join(index_items),
+        title_html=render_markdown_text(title).replace('<p>', '').replace('</p>', '') if title else None,
+        description_html=render_markdown_text(description) if description else None,
     )
     index_path = output_dir / "index.html"
     index_path.write_text(index_content, encoding="utf-8")
@@ -1884,6 +1904,14 @@ def generate_html_from_session_data(session_data, output_dir, github_repo=None):
     is_flag=True,
     help="Open the generated index.html in your default browser (default if no -o specified).",
 )
+@click.option(
+    "--title",
+    help="Custom title for the index page. If not specified, uses 'Claude Code transcript'.",
+)
+@click.option(
+    "--description",
+    help="Description text to display below the title on the index page.",
+)
 def web_cmd(
     session_id,
     output,
@@ -1894,6 +1922,8 @@ def web_cmd(
     gist,
     include_json,
     open_browser,
+    title,
+    description,
 ):
     """Select and convert a web session from the Claude API to HTML.
 
@@ -1965,7 +1995,7 @@ def web_cmd(
 
     output = Path(output)
     click.echo(f"Generating HTML in {output}/...")
-    generate_html_from_session_data(session_data, output, github_repo=repo)
+    generate_html_from_session_data(session_data, output, github_repo=repo, title=title, description=description)
 
     # Show output directory
     click.echo(f"Output: {output.resolve()}")

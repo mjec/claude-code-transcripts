@@ -1497,6 +1497,51 @@ class TestOutputAutoOption:
         assert (expected_dir / "index.html").exists()
 
 
+class TestTitleAndDescription:
+    """Tests for custom title and description display."""
+
+    def test_default_title_when_not_specified(self, output_dir):
+        """Test that default title 'Claude Code transcript' is used when title not specified."""
+        fixture_path = Path(__file__).parent / "sample_session.json"
+        generate_html(fixture_path, output_dir)
+
+        index_html = (output_dir / "index.html").read_text(encoding="utf-8")
+        assert "Claude Code transcript" in index_html
+
+    def test_custom_title_displayed(self, output_dir):
+        """Test that custom title is displayed when specified."""
+        fixture_path = Path(__file__).parent / "sample_session.json"
+        generate_html(fixture_path, output_dir, title="My Custom Title")
+
+        index_html = (output_dir / "index.html").read_text(encoding="utf-8")
+        assert "My Custom Title" in index_html
+        # Default title should not appear
+        assert "<h1>Claude Code transcript</h1>" not in index_html
+
+    def test_custom_description_displayed(self, output_dir):
+        """Test that custom description is displayed when specified."""
+        fixture_path = Path(__file__).parent / "sample_session.json"
+        generate_html(
+            fixture_path,
+            output_dir,
+            title="Test Title",
+            description="This is a custom description for the transcript."
+        )
+
+        index_html = (output_dir / "index.html").read_text(encoding="utf-8")
+        assert "This is a custom description for the transcript." in index_html
+
+    def test_no_description_when_not_specified(self, output_dir):
+        """Test that no description paragraph appears when description not specified."""
+        fixture_path = Path(__file__).parent / "sample_session.json"
+        generate_html(fixture_path, output_dir, title="Test Title")
+
+        index_html = (output_dir / "index.html").read_text(encoding="utf-8")
+        # The description should not leave an empty paragraph
+        # Check that there's no unexpected empty content
+        assert index_html.count("<p></p>") == 0
+
+
 class TestSearchFeature:
     """Tests for the search feature on index.html pages."""
 

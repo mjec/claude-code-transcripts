@@ -4,7 +4,7 @@
 
 {% block content %}
         <div class="header-row">
-            <h1>Claude Code transcript</h1>
+            <h1>{% if title_html %}{{ title_html|safe }}{% else %}Claude Code transcript{% endif %}</h1>
             <div id="search-box">
                 <input type="text" id="search-input" placeholder="Search..." aria-label="Search transcripts">
                 <button id="search-btn" type="button" aria-label="Search">
@@ -13,8 +13,9 @@
             </div>
             <p><a href="/">❮ All transcripts</a></p>
         </div>
+        {% if description_html %}<div style="margin-bottom: 24px;">{{ description_html|safe }}</div>{% endif %}
         {{ pagination_html|safe }}
-        <p style="color: var(--text-muted); margin-bottom: 24px;">{{ prompt_num }} prompts · {{ total_messages }} messages · {{ total_tool_calls }} tool calls · {{ total_commits }} commits · {{ total_pages }} pages</p>
+        <p style="color: var(--text-muted); margin-bottom: 24px;">{% if title_html %}Claude Code transcript{% endif %} · {{ prompt_num }} prompts · {{ total_messages }} messages · {{ total_tool_calls }} tool calls · {{ total_commits }} commits · {{ total_pages }} pages</p>
         {{ index_items_html|safe }}
         {{ pagination_html|safe }}
 
