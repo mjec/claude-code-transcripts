@@ -49,7 +49,7 @@ LONG_TEXT_THRESHOLD = (
 )
 
 
-def extract_text_from_content(content):
+def extract_text_from_content(content, strip_html_tags=False):
     """Extract plain text from message content.
 
     Handles both string content (older format) and array content (newer format).
@@ -71,7 +71,11 @@ def extract_text_from_content(content):
                 text = block.get("text", "")
                 if text:
                     texts.append(text)
-    return " ".join([re.sub('<([^<]+?)>(.*)</\\1>', '', t.replace("\n", " ")) for t in texts]).strip()
+    if strip_html_tags:
+        strip_tags = lambda t: re.sub(r"<([^<]+?)>(.*?)</\1>", "", t)
+    else:
+        strip_tags = lambda t: t
+    return " ".join([html.escape(strip_tags(t)) for t in texts]).strip()
 
 
 # Module-level variable for GitHub repo (set by generate_html)
@@ -101,7 +105,7 @@ def get_session_summary(filepath, max_length=200):
                 if entry.get("type") == "user":
                     msg = entry.get("message", {})
                     content = msg.get("content", "")
-                    text = extract_text_from_content(content)
+                    text = extract_text_from_content(content, True)
                     if text:
                         if len(text) > max_length:
                             return text[: max_length - 3] + "..."
@@ -123,7 +127,7 @@ def _get_jsonl_summary(filepath, max_length=200):
                     obj = json.loads(line)
                     # First priority: summary type entries
                     if obj.get("type") == "summary" and obj.get("summary"):
-                        summary = obj["summary"]
+                        summary = re.sub(r"<([^<]+?)>(.*?)</\1>", "", obj["summary"])
                         if len(summary) > max_length:
                             return summary[: max_length - 3] + "..."
                         return summary
@@ -144,7 +148,7 @@ def _get_jsonl_summary(filepath, max_length=200):
                         and obj.get("message", {}).get("content")
                     ):
                         content = obj["message"]["content"]
-                        text = extract_text_from_content(content)
+                        text = extract_text_from_content(content, True)
                         if text:
                             if len(text) > max_length:
                                 return text[: max_length - 3] + "..."
@@ -683,10 +687,10 @@ def render_content_block(block):
         data = source.get("data", "")
         return _macros.image_block(media_type, data)
     elif block_type == "thinking":
-        content_html = render_markdown_text(block.get("thinking", ""))
+        content_html = render_markdown_text(html.escape(block.get("thinking", "")))
         return _macros.thinking(content_html)
     elif block_type == "text":
-        content_html = render_markdown_text(block.get("text", ""))
+        content_html = render_markdown_text(html.escape(block.get("text", "")))
         return _macros.assistant_text(content_html)
     elif block_type == "tool_use":
         tool_name = block.get("name", "Unknown tool")
@@ -750,7 +754,7 @@ def render_user_message_content(message_data):
     if isinstance(content, str):
         if is_json_like(content):
             return _macros.user_content(format_json(content))
-        return _macros.user_content(render_markdown_text(content))
+        return _macros.user_content(render_markdown_text(html.escape(content)))
     elif isinstance(content, list):
         return "".join(render_content_block(block) for block in content)
     return f"<p>{html.escape(str(content))}</p>"
@@ -1334,7 +1338,7 @@ def generate_html(json_path, output_dir, github_repo=None, title=None, descripti
 
         long_texts_html = ""
         for lt in stats["long_texts"]:
-            rendered_lt = render_markdown_text(lt)
+            rendered_lt = render_markdown_text(html.escape(lt))
             long_texts_html += _macros.index_long_text(rendered_lt)
 
         stats_html = _macros.index_stats(tool_stats_str, long_texts_html)
@@ -1806,7 +1810,7 @@ def generate_html_from_session_data(session_data, output_dir, github_repo=None, 
         page_num = (i // PROMPTS_PER_PAGE) + 1
         msg_id = make_msg_id(conv["timestamp"])
         link = f"page-{page_num:03d}.html#{msg_id}"
-        rendered_content = render_markdown_text(conv["user_text"])
+        rendered_content = render_markdown_text(html.escape(conv["user_text"]))
 
         # Collect all messages including from subsequent continuation conversations
         # This ensures long_texts from continuations appear with the original prompt
@@ -1822,7 +1826,7 @@ def generate_html_from_session_data(session_data, output_dir, github_repo=None, 
 
         long_texts_html = ""
         for lt in stats["long_texts"]:
-            rendered_lt = render_markdown_text(lt)
+            rendered_lt = render_markdown_text(html.escape(lt))
             long_texts_html += _macros.index_long_text(rendered_lt)
 
         stats_html = _macros.index_stats(tool_stats_str, long_texts_html)
